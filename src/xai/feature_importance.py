@@ -49,18 +49,28 @@ class FeatureImportanceAnalyzer:
         """
         print(f"Computing permutation importance ({n_repeats} repeats)...")
         
-        perm_importance = permutation_importance(
-            self.model.get_model(),
-            X, y,
-            n_repeats=n_repeats,
-            random_state=42,
-            n_jobs=-1
-        )
+        # LightGBM Booster doesn't implement fit, so we use direct prediction wrapper
+        def predict_fn(X_data):
+            return self.model.predict(X_data)
+        
+        # Compute permutation importance manually for LightGBM
+        from sklearn.metrics import mean_squared_error
+        
+        baseline_score = mean_squared_error(y, predict_fn(X))
+        importances = []
+        
+        for feature_idx in range(X.shape[1]):
+            X_permuted = X.copy()
+            X_permuted.iloc[:, feature_idx] = np.random.permutation(X_permuted.iloc[:, feature_idx])
+            
+            permuted_score = mean_squared_error(y, predict_fn(X_permuted))
+            importance = permuted_score - baseline_score
+            importances.append(importance)
         
         importance_df = pd.DataFrame({
             'feature': X.columns,
-            'importance_mean': perm_importance.importances_mean,
-            'importance_std': perm_importance.importances_std
+            'importance_mean': importances,
+            'importance_std': [0] * len(importances)  # Placeholder for std
         }).sort_values('importance_mean', ascending=False)
         
         if top_k:
