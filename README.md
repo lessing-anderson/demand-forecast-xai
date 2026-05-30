@@ -1,6 +1,6 @@
 # Demand Forecasting with xAI - M5 Dataset
 
-A modular, production-ready framework for demand forecasting with explainable AI (xAI) using the M5 competition dataset.
+A modular framework for demand forecasting with explainable AI (xAI) using the M5 competition dataset.
 
 ## 🎯 Project Structure
 
