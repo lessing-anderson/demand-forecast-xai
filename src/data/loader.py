@@ -1,10 +1,8 @@
 """
 Data loading module for M5 demand forecasting dataset.
-Handles raw CSV loading and basic merging operations.
+Handles raw CSV loading and basic operations.
 """
 import pandas as pd
-import numpy as np
-import gc
 import warnings
 
 warnings.filterwarnings('ignore')
@@ -31,27 +29,7 @@ def filter_by_store(sales, prices, store_id):
     prices_filtered = prices[prices['store_id'] == store_id].copy()
     return sales_filtered, prices_filtered
 
-
-def melt_sales(sales):
-    """Convert sales data from wide to long format."""
-    id_vars = ['id', 'item_id', 'dept_id', 'cat_id', 'store_id', 'state_id']
-    df = pd.melt(sales, id_vars=id_vars, var_name='d', value_name='sales')
-    return df
-
-
-def merge_with_calendar_and_prices(df, calendar, prices):
-    """Merge sales data with calendar and price information."""
-    df = pd.merge(df, calendar, on='d', how='left')
-    df = pd.merge(df, prices, on=['store_id', 'item_id', 'wm_yr_wk'], how='left')
-    
-    # Drop rows before product launch (missing prices)
-    df.dropna(subset=['sell_price'], inplace=True)
-    df['date'] = pd.to_datetime(df['date'])
-    
-    return df
-
-
-def load_and_merge(raw_path, store_filter=None):
+def load_data(raw_path, store_filter=None):
     """
     Load raw M5 data and merge calendar + prices.
     
@@ -70,14 +48,5 @@ def load_and_merge(raw_path, store_filter=None):
     if store_filter:
         print(f"Filtering data for store: {store_filter}...")
         sales, prices = filter_by_store(sales, prices, store_filter)
-
-    print("Melting sales data (Wide to Long)...")
-    df = melt_sales(sales)
     
-    del sales
-    gc.collect()
-
-    print("Merging with calendar and prices...")
-    df = merge_with_calendar_and_prices(df, calendar, prices)
-    
-    return df
+    return calendar, prices, sales

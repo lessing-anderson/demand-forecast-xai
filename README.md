@@ -76,16 +76,6 @@ Options:
 python experiments/baseline.py
 ```
 
-**Feature selection:**
-```bash
-python experiments/feature_selection.py
-```
-
-**xAI analysis (SHAP, LIME):**
-```bash
-python experiments/xai_analysis.py
-```
-
 ### 4. Evaluate Model
 
 ```bash
@@ -224,12 +214,6 @@ xai:
 4. **xAI Analysis** → SHAP values, LIME explanations
 5. **Visualization** → Feature importance plots, residual plots
 
-## 📦 New Dependencies Added
-
-- `shap==0.45.0` - SHAP explainability
-- `lime==0.2.0` - LIME explanations  
-- `PyYAML==6.0` - Configuration files
-
 ## 🎓 Extending the Framework
 
 ### Adding a New Model
@@ -251,6 +235,6 @@ Add test files to `tests/` following naming convention `test_*.py`
 ## 📖 References
 
 - [M5 Forecasting Competition](https://www.kaggle.com/c/m5-forecasting-accuracy)
+- [LightGBM Documentation](https://lightgbm.readthedocs.io/)
 - [SHAP Documentation](https://shap.readthedocs.io/)
 - [LIME Documentation](https://lime-ml.readthedocs.io/)
-- [LightGBM Documentation](https://lightgbm.readthedocs.io/)

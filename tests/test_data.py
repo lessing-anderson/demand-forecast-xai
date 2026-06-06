@@ -9,7 +9,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.data.preprocessing import create_calendar_features, encode_event_features, create_lag_features
+from src.data.data_processing import create_calendar_features, encode_event_features, create_lag_features
 from src.data.splitting import get_features_and_target, prepare_train_data
 
 

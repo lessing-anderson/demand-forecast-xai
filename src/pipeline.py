@@ -7,7 +7,7 @@ import numpy as np
 from pathlib import Path
 
 from src.data.loader import load_and_merge
-from src.data.preprocessing import create_features, reduce_mem_usage
+from src.data.data_processing import create_features, reduce_mem_usage
 from src.data.splitting import isolate_ground_truth, prepare_train_data, prepare_test_data
 from src.models.lightgbm_model import LightGBMModel
 from src.utils.metrics import evaluate_forecast
