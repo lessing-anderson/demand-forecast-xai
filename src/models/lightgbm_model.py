@@ -69,7 +69,7 @@ class LightGBMModel(BaseModel):
         self.is_fitted = True
         self.feature_names = X_train.columns.tolist()
         
-        print(f"✓ Model training complete! (num_boost_round: {self.model.num_trees()})")
+        print(f"[+] Model training complete! (num_boost_round: {self.model.num_trees()})")
         return self
     
     def predict(self, X):
