@@ -1,6 +1,8 @@
 # M5 Forecasting Raw Data: Competition Context & Files
 
-This directory contains the original, immutable data files for the M5 Forecasting - Accuracy competition. Understanding the distinction between the "Validation" and "Evaluation" files is key to reproducing the competition phases.
+This directory must contains the original, immutable data files for the M5 Forecasting - Accuracy competition. Understanding the distinction between the "Validation" and "Evaluation" files is key to reproducing the competition phases.
+
+Link to download: https://www.kaggle.com/competitions/m5-forecasting-accuracy/data
 
 ## File Descriptions
 
