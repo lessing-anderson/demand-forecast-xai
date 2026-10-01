@@ -1,81 +1,131 @@
-# Previsão de Demanda com IA Explicável
+# Previsao de Demanda com IA Explicavel
 
-Projeto de previsão de demanda baseado no dataset **M5 Forecasting Accuracy**.
-O repositório transforma os dados originais da competição em uma base analítica,
-treina um modelo LightGBM, produz explicações locais com LIME e SHAP e as avalia.
+Projeto de previsao de demanda baseado no dataset **M5 Forecasting Accuracy**.
+O repositorio transforma os dados originais da competicao em tabelas analiticas,
+cria features temporais, treina modelos de previsao, produz explicacoes locais
+com LIME e SHAP e avalia essas explicacoes.
 
-## O que é o projeto
+## O que e o projeto
 
-O projeto implementa um fluxo experimental de ponta a ponta para o
-dataset M5:
+O projeto implementa um fluxo experimental de ponta a ponta para o dataset M5:
 
-1. explora e processa os dados brutos;
-2. cria features temporais, de preço e de eventos;
-3. treina e avalia um baseline LightGBM;
-4. seleciona previsões com erros baixos e altos;
-5. explica esses casos com LIME e SHAP.
-6. calcula métricas de xAI em cada um dos métodos.
+1. explora os dados brutos e o contexto da competicao;
+2. converte os CSVs em tabelas Parquet dimensionais e factuais;
+3. cria features temporais, de preco, eventos e SNAP;
+4. treina e compara um baseline sazonal com um modelo LightGBM;
+5. analisa previsoes e importancias de features;
+6. explica instancias selecionadas com LIME e SHAP;
+7. mede fidelidade local, estabilidade e custo computacional das explicacoes.
 
-O fluxo é executado por notebooks, enquanto a lógica reutilizável está
-organizada em módulos Python em `src/`.
+Os notebooks orquestram os experimentos, enquanto a logica reutilizavel esta
+organizada em modulos Python dentro de `src/`.
 
 ## Objetivo do TCC
 
-Investigar a aplicação de técnicas de IA explicável em previsão de demanda,
-comparando como LIME e SHAP justificam as previsões de um modelo LightGBM,
-especialmente em cenários de maior e menor erro de previsão.
+Investigar a aplicacao de tecnicas de IA explicavel em previsao de demanda,
+comparando como LIME e SHAP justificam as previsoes de um modelo LightGBM em
+cenarios de menor e maior erro de previsao.
 
-O estudo estabelece uma base para avaliar a qualidade das explicações quanto a
-fidelidade, estabilidade e custo computacional.
+O estudo avalia a qualidade das explicacoes sob tres perspectivas: fidelidade
+ao comportamento local do modelo, estabilidade diante de pequenas
+perturbacoes e custo computacional.
+
+## Dados
+
+O projeto usa os arquivos da competicao [M5 Forecasting
+Accuracy](https://www.kaggle.com/competitions/m5-forecasting-accuracy/data).
+Para a aplicacao de XAI, `sales_train_evaluation.csv` e usado como fonte de
+vendas. O periodo `d_1` a `d_1913` funciona como treino e `d_1914` a `d_1941`
+como janela de teste/auditoria, permitindo calcular os erros com os valores
+reais disponiveis.
+
+Os arquivos originais devem ser mantidos em `data/raw/`:
+
+- `calendar.csv`;
+- `sell_prices.csv`;
+- `sales_train_evaluation.csv`;
+- `sales_train_validation.csv`;
+- `sample_submission.csv`.
 
 ## Tecnologias
 
 - Python 3.12.11;
-- Pandas, NumPy e PyArrow para transformação e persistência de dados;
-- LightGBM para previsão de demanda;
-- scikit-learn para métricas;
+- Pandas, NumPy e PyArrow para transformacao e persistencia em Parquet;
+- LightGBM para previsao de demanda;
+- scikit-learn para metricas de previsao;
 - LIME e SHAP para explicabilidade;
-- Matplotlib, Seaborn e Plotly para visualização;
-- Jupyter/IPython para execução dos experimentos.
+- SciPy para a correlacao usada na estabilidade;
+- Matplotlib, Seaborn e Plotly para visualizacao;
+- Jupyter/IPython para execucao dos experimentos.
 
-As versões usadas pelo experimento estão fixadas em
-[`requirements.txt`](requirements.txt).
+As versoes usadas pelo experimento estao fixadas em
+[`requirements.txt`](requirements.txt). O projeto declara Python `>=3.12` em
+[`pyproject.toml`](pyproject.toml).
+
+## Pipeline
+
+### Processamento dos dados
+
+O notebook `02_data_processing.ipynb` carrega os CSVs e gera em
+`data/processed/`:
+
+- `dim_calendar.parquet`;
+- `dim_location.parquet`;
+- `dim_prices.parquet`;
+- `bridge_snap.parquet`;
+- `fact_sales.parquet`.
+
+O notebook `03_feature_engineering.ipynb` consolida essas tabelas e salva
+`data/features/features.parquet`. Entre as features criadas estao calendario,
+eventos, preco, `sales_lag_7`, `sales_lag_28`, medias moveis de 7 e 28 dias e
+medias moveis ancoradas em `sales_lag_28`.
+
+### Modelos e avaliacao
+
+O `SeasonalNaiveModel` usa `sales_lag_7` como previsao e serve como baseline
+de referencia. O `LightGBMModel` implementa regressao com early stopping e
+exposicao de importancia por `gain` ou `split`.
+
+As metricas de previsao disponiveis incluem erro absoluto, MAE, RMSE, MAPE,
+RMSSE e WRMSSE nos 12 niveis hierarquicos do M5. As avaliacoes de XAI usam:
+
+- **fidelidade:** variacao media da previsao ao substituir as features mais
+  importantes por valores amostrados da referencia;
+- **estabilidade:** correlacao de Spearman entre importancias da instancia
+  original e de uma instancia perturbada;
+- **custo computacional:** tempo de execucao da funcao avaliada.
 
 ## Estrutura das pastas
 
 ```text
 ├── data/
 │   ├── raw/                         # CSVs originais do M5
-│   ├── processed/                   # Tabelas Parquet intermediárias
-│   └── features/                    # Dataset final para modelagem
-├── docs/                            # Documentação técnica completa
-│   ├── 01_architecture/             # Arquitetura e decisões
-│   ├── 02_data/                     # Schemas, contrato e linhagem
-│   ├── 04_notebooks/                # Guias de execução dos notebooks (01 a 09)
-│   ├── 05_modeling/                 # LightGBM, validação temporal e métricas
-│   ├── 06_explainability/           # LIME, SHAP e amostragem por cauda de erro
-│   ├── 07_operations/               # Instalação, reprodutibilidade e runbook
-│   ├── 08_development/              # Organização do código, testes e contribuição
-│   ├── 09_reference/                # Referência dos módulos Python em src/
-│   └── 10_adr/                      # Architecture Decision Records (ADRs)
+│   ├── processed/                   # Tabelas Parquet intermediarias
+│   └── features/                    # Features finais para modelagem
 ├── experiments/
-│   └── exp_001_baseline_lgbm/
-│       └── artifacts/               # Modelo, métricas, previsões e xAI
+│   ├── exp_000_seasonal_naive/
+│   │   └── artifacts/               # Artefatos do baseline sazonal
+│   └── exp_001_lgbm/
+│       └── artifacts/               # Modelo, previsoes, metricas e XAI
 ├── notebooks/
 │   ├── 01_raw_data_exploration.ipynb
 │   ├── 02_data_processing.ipynb
 │   ├── 03_feature_engineering.ipynb
-│   ├── 04_lightgbm_baseline.ipynb
-│   ├── 05_LIME_explainer.ipynb
-│   ├── 06_SHAP_explainer.ipynb
-│   ├── 07_faithfulness_measuring.ipynb
-│   ├── 08_stability_measuring.ipynb
-│   └── 09_computational_cost_measuring.ipynb
+│   ├── 04_seasonal_naive_model.ipynb
+│   ├── 05_naive_analysis.ipynb
+│   ├── 06_lightgbm_model.ipynb
+│   ├── 07_lightgbm_analysis.ipynb
+│   ├── 09_LIME_explainer.ipynb
+│   ├── 10_SHAP_explainer.ipynb
+│   ├── 11_fidelity_measuring.ipynb
+│   ├── 12_stability_measuring.ipynb
+│   └── 13_computational_cost_measuring.ipynb
 ├── src/
 │   ├── data/                        # Carga, processamento e features
-│   ├── explainers/                  # Implementações LIME, SHAP e métricas de fidelidade, estabilidade e custo
-│   ├── models/                      # Contrato base, LightGBM e split temporal
-│   └── utils/                       # Métricas de negócio/previsão e serialização
+│   ├── explainers/                  # Integracoes LIME e SHAP
+│   ├── evaluation/                  # Fidelidade, estabilidade e custo
+│   ├── models/                      # Modelos e split temporal
+│   └── utils/                       # Metricas e funcoes auxiliares
 ├── requirements.txt
 └── pyproject.toml
 ```
@@ -91,8 +141,7 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-Para abrir os notebooks fora de uma IDE com suporte Jupyter, instale uma
-interface Jupyter no ambiente:
+Para abrir os notebooks fora de uma IDE com suporte Jupyter:
 
 ```powershell
 python -m pip install notebook
@@ -101,54 +150,40 @@ python -m notebook
 
 ### 2. Obter os dados
 
-Baixe os dados da competição
-[M5 Forecasting Accuracy](https://www.kaggle.com/competitions/m5-forecasting-accuracy/data)
-e mantenha-os em `data/raw/` com os nomes originais:
-
-- `calendar.csv`
-- `sell_prices.csv`
-- `sales_train_evaluation.csv`
-- `sales_train_validation.csv`
-- `sample_submission.csv`
+Baixe os dados da competicao M5 e coloque os arquivos listados acima em
+`data/raw/` com os nomes originais.
 
 ### 3. Executar os notebooks
 
-Abra a pasta `notebooks/` e execute os notebooks nesta ordem:
+Execute os notebooks a partir da pasta `notebooks/`, nesta ordem:
 
 ```text
+01_raw_data_exploration.ipynb       # opcional
 02_data_processing.ipynb
 03_feature_engineering.ipynb
-04_lightgbm_baseline.ipynb
-05_LIME_explainer.ipynb
-06_SHAP_explainer.ipynb
-07_faithfulness_measuring.ipynb
-08_stability_measuring.ipynb
-09_computational_cost_measuring.ipynb
+04_seasonal_naive_model.ipynb
+05_naive_analysis.ipynb
+06_lightgbm_model.ipynb
+07_lightgbm_analysis.ipynb
+09_LIME_explainer.ipynb
+10_SHAP_explainer.ipynb
+11_fidelity_measuring.ipynb
+12_stability_measuring.ipynb
+13_computational_cost_measuring.ipynb
 ```
 
-`01_raw_data_exploration.ipynb` é opcional e pode ser executado antes do
-processamento. Os notebooks assumem `notebooks/` como diretório de trabalho;
-por isso, execute-os a partir dessa pasta ou ajuste os caminhos relativos.
+Os notebooks usam caminhos relativos a `notebooks/`. Ao executa-los por outra
+interface, ajuste o diretorio de trabalho ou os caminhos relativos.
 
 ### 4. Resultados
 
-Ao final da execução será possível visualizar o experimento `exp_001_baseline_lgbm` 
-com os resultados em `experiments/exp_001_baseline_lgbm/artifacts/`.
+Os artefatos sao organizados por experimento:
 
-O baseline gera `lightgbm_CA_1.pkl`, previsões do holdout, métricas e
-importâncias. Os notebooks LIME e SHAP reutilizam esses artefatos e geram as
-explicações locais correspondentes. E os notebooks de measuring geram as métricas das explicações.
+- `experiments/exp_000_seasonal_naive/artifacts/` contem o modelo sazonal,
+  dados de treino e previsoes;
+- `experiments/exp_001_lgbm/artifacts/` contem o modelo LightGBM, dados de
+  treino/teste, previsoes, importancias, explicacoes LIME/SHAP e resultados de
+  fidelidade, estabilidade e custo computacional.
 
-## Documentação Técnica
-
-A documentação técnica do repositório está centralizada na pasta [`docs/`](docs/README.md):
-
-- [01. Arquitetura](docs/01_architecture/01_overview.md) (Visão Geral, Fluxo de Execução, Dependências e Decisões)
-- [02. Dados](docs/02_data/01_m5-source-data.md) (Fonte M5, Schemas Processados, Contrato de Features e Linhagem)
-- [04. Notebooks](docs/04_notebooks/01_raw-data-exploration.md) (Guias detalhados de execução para os notebooks 01 a 09)
-- [05. Modelagem](docs/05_modeling/01_lightgbm-baseline.md) (LightGBM Baseline, Estratégia de Validação Temporal e Métricas)
-- [06. Explicabilidade](docs/06_explainability/01_lime.md) (LIME, SHAP, Amostragem por Cauda de Erro e Protocolo xAI)
-- [07. Operações](docs/07_operations/01_environment-and-installation.md) (Instalação, Reprodutibilidade, Catálogo de Artefatos e Runbook)
-- [08. Desenvolvimento](docs/08_development/01_code-organization.md) (Estrutura do Código, Estratégia de Testes e Guia de Contribuição)
-- [09. Referência de Código](docs/09_reference/index.md) (Documentação da API dos módulos Python em `src/`)
-- [10. ADRs](docs/10_adr/README.md) (Architecture Decision Records)
+Os nomes dos arquivos incluem o recorte de series utilizado, como
+`CA_1_TX_1`.
