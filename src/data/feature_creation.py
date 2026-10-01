@@ -135,7 +135,7 @@ def _standardize_dtypes(df, lags, rolling_windows, lag_col_for_rolling):
     int8_cols = [
         'day_of_week',
         'month',
-        'day_of_month'
+        'day_of_month',
         'week_of_year',
     ]
 
